@@ -1,37 +1,24 @@
+import argparse
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib.path import Path as MplPath
 from fontTools.ttLib import TTFont
 
 ##############################################################################
-# 1) Helper Functions
+# 1) Helper Functions (unchanged)
 ##############################################################################
 
 def cffCharStringToPathAndPoints(charString, scale=1.0):
-    """
-    Convert a CFF (Type 2) charString into:
-      - A Matplotlib Path
-      - A list of on-curve (anchor) points
-      - A list of off-curve control points
-
-    We also return a list of path "segments" so we can analyze line vs curve.
-    Each segment is represented as (segment_type, list_of_vertices),
-      where segment_type is 'line'/'cubic' etc.
-    """
     from fontTools.pens.recordingPen import RecordingPen
     
     pen = RecordingPen()
-    charString.draw(pen)  # 'draw' calls moveTo/lineTo/curveTo/closePath, etc.
-    recorded_ops = pen.value  # list of (methodName, pointsList) tuples
+    charString.draw(pen)  
+    recorded_ops = pen.value  
 
     vertices = []
     codes = []
-
     anchor_points = []
     control_points = []
-
-    # We'll keep a list of segments for analysis:
-    # e.g. [("line", [(x0,y0), (x1,y1)]), ("cubic", [...])]
     segments = []
 
     def close_subpath_if_needed():
@@ -39,11 +26,9 @@ def cffCharStringToPathAndPoints(charString, scale=1.0):
             vertices.append(vertices[-1])
             codes.append(MplPath.CLOSEPOLY)
 
-    current_start = None  # track start of the current "stroke" for segment
-
+    current_start = None
     for (method, pts) in recorded_ops:
         if method == "moveTo":
-            # close the previous subpath if needed
             close_subpath_if_needed()
             x, y = pts[0]
             x *= scale
@@ -57,8 +42,6 @@ def cffCharStringToPathAndPoints(charString, scale=1.0):
             for (x, y) in pts:
                 x *= scale
                 y *= scale
-                # line from the previous vertex to (x, y)
-                # gather 2 points for the segment
                 if vertices:
                     seg_vertices = [vertices[-1], (x, y)]
                 else:
@@ -70,7 +53,7 @@ def cffCharStringToPathAndPoints(charString, scale=1.0):
                 anchor_points.append((x, y))
 
         elif method == "curveTo":
-            # each set of 3 points => (control1, control2, end)
+            # cubic segments in groups of 3 points: (c1, c2, end)
             for i in range(0, len(pts), 3):
                 c1x, c1y = pts[i]
                 c2x, c2y = pts[i+1]
@@ -82,20 +65,14 @@ def cffCharStringToPathAndPoints(charString, scale=1.0):
                 ex  *= scale
                 ey  *= scale
 
-                # two control points + one anchor
                 control_points.append((c1x, c1y))
                 control_points.append((c2x, c2y))
                 anchor_points.append((ex, ey))
 
-                # build the segment for analysis
-                if vertices:
-                    seg_start = vertices[-1]
-                else:
-                    seg_start = (ex, ey)  # fallback
+                seg_start = vertices[-1] if vertices else (ex, ey)
                 seg_vertices = [seg_start, (c1x, c1y), (c2x, c2y), (ex, ey)]
                 segments.append(("cubic", seg_vertices))
 
-                # build path
                 vertices.append((c1x, c1y))
                 codes.append(MplPath.CURVE4)
                 vertices.append((c2x, c2y))
@@ -104,41 +81,26 @@ def cffCharStringToPathAndPoints(charString, scale=1.0):
                 codes.append(MplPath.CURVE4)
 
         elif method == "qCurveTo":
-            # Quadratic curves in CFF are less common, but let's handle if present
-            # Each group is (control1, ..., controlN, end)
-            # We'll just handle them as multiple segments if needed
+            # Quadratic in CFF is less common
             pass
 
         elif method == "closePath":
             close_subpath_if_needed()
 
-    # If the charstring never explicitly closed the last subpath:
     close_subpath_if_needed()
-
     path = MplPath(vertices, codes)
     return path, anchor_points, control_points, segments
 
 
 def ttGlyphToPathAndPoints(ttGlyph, scale=1.0):
-    """
-    Convert a TrueType glyph ('glyf') to:
-      - A Matplotlib Path
-      - A list of on-curve anchor points
-      - A list of off-curve control points
-      - A list of "segments" for analysis (line/quadratic)
-
-    We do a simplified approach to consecutive off-curves.
-    """
     coords = ttGlyph.coordinates
     endPts = ttGlyph.endPtsOfContours
-    flags = ttGlyph.flags
+    flags  = ttGlyph.flags
 
     vertices = []
     codes = []
-
     anchor_points = []
     control_points = []
-
     segments = []
 
     start_index = 0
@@ -150,7 +112,6 @@ def ttGlyphToPathAndPoints(ttGlyph, scale=1.0):
         if not len(contour_coords):
             continue
 
-        # MoveTo first point
         x0, y0 = contour_coords[0]
         x0 *= scale
         y0 *= scale
@@ -167,44 +128,34 @@ def ttGlyphToPathAndPoints(ttGlyph, scale=1.0):
             onCurve = bool(contour_flags[i] & 1)
 
             if onCurve:
-                # On-curve => line segment from current_point to (x1,y1)
                 segments.append(("line", [current_point, (x1, y1)]))
-
                 vertices.append((x1, y1))
                 codes.append(MplPath.LINETO)
                 anchor_points.append((x1, y1))
                 current_point = (x1, y1)
                 i += 1
             else:
-                # Off-curve => QCURVE to next on-curve
+                # Off-curve => QCURVE
                 control_points.append((x1, y1))
-                cpx, cpy = x1, y1
-                if i + 1 < len(contour_coords):
+                if i+1 < len(contour_coords):
                     x2, y2 = contour_coords[i+1]
                     x2 *= scale
                     y2 *= scale
                     onCurve2 = bool(contour_flags[i+1] & 1)
                     if onCurve2:
-                        # Quadratic from current_point -> control -> (x2,y2)
-                        # This is one segment
-                        segments.append(("quadratic", [current_point, (cpx, cpy), (x2, y2)]))
-
-                        # Build path: matplotlib uses CURVE3 in pairs
-                        vertices.append((cpx, cpy))
+                        segments.append(("quadratic", [current_point, (x1, y1), (x2, y2)]))
+                        vertices.append((x1, y1))
                         codes.append(MplPath.CURVE3)
                         vertices.append((x2, y2))
                         codes.append(MplPath.CURVE3)
-
                         anchor_points.append((x2, y2))
                         current_point = (x2, y2)
                         i += 2
                     else:
-                        # Next is off-curve => advanced logic needed
                         i += 1
                 else:
                     i += 1
 
-        # Close the contour
         vertices.append(vertices[-1])
         codes.append(MplPath.CLOSEPOLY)
 
@@ -213,13 +164,10 @@ def ttGlyphToPathAndPoints(ttGlyph, scale=1.0):
 
 
 ##############################################################################
-# 2) Main Function to Plot Omega + Output Analysis
+# 2) Main Function to Extract + Plot Glyph + Write Analysis
 ##############################################################################
 
-def plotOmegaFromFont(font_path, unicode_val=0x03A9, scale=1.0, report_file="omega_analysis.txt"):
-    """Plot the glyph for `unicode_val` (default: U+03A9) from `font_path`,
-    including on/off-curve points, and write an analysis report to a text file.
-    """
+def plotOmegaFromFont(font_path, unicode_val=0x03A9, scale=1.0, report_file="out.txt"):
     font = TTFont(font_path)
     cmap = font.getBestCmap()
     if not cmap:
@@ -233,15 +181,12 @@ def plotOmegaFromFont(font_path, unicode_val=0x03A9, scale=1.0, report_file="ome
     path = None
     anchor_points = []
     control_points = []
-    segments = []  # (segment_type, [points...])
+    segments = []
 
     if 'glyf' in font:
-        # TrueType outlines
-        glyf_table = font['glyf']
-        glyph = glyf_table[glyph_name]
+        glyph = font['glyf'][glyph_name]
         path, anchor_points, control_points, segments = ttGlyphToPathAndPoints(glyph, scale=scale)
     elif 'CFF ' in font:
-        # CFF (PostScript) outlines
         cff = font['CFF '].cff
         topDict = cff.topDictIndex[0]
         charString = topDict.CharStrings[glyph_name]
@@ -249,30 +194,20 @@ def plotOmegaFromFont(font_path, unicode_val=0x03A9, scale=1.0, report_file="ome
     else:
         raise RuntimeError("No 'glyf' or 'CFF ' table found in font. Not supported here.")
 
-    # 2A) Plot the shape
+    # Plot
     fig, ax = plt.subplots(figsize=(6,6))
-
-    # Outline fill (light)
     patch = patches.PathPatch(path, facecolor='black', edgecolor='none', alpha=0.15)
     ax.add_patch(patch)
-
-    # Outline stroke
     outline_patch = patches.PathPatch(path, facecolor='none', edgecolor='black', linewidth=1.0)
     ax.add_patch(outline_patch)
 
-    # On-curve (anchor) points in red
     if anchor_points:
-        ax.scatter([p[0] for p in anchor_points],
-                   [p[1] for p in anchor_points],
+        ax.scatter([p[0] for p in anchor_points], [p[1] for p in anchor_points],
                    color='red', marker='o', label='On-curve points')
-
-    # Off-curve control points in blue
     if control_points:
-        ax.scatter([p[0] for p in control_points],
-                   [p[1] for p in control_points],
+        ax.scatter([p[0] for p in control_points], [p[1] for p in control_points],
                    color='blue', marker='x', label='Off-curve controls')
 
-    # Set axes
     xs = [v[0] for v in path.vertices]
     ys = [v[1] for v in path.vertices]
     if xs and ys:
@@ -284,28 +219,19 @@ def plotOmegaFromFont(font_path, unicode_val=0x03A9, scale=1.0, report_file="ome
     ax.set_xlabel("x")
     ax.set_ylabel("y")
     ax.legend(loc='best')
-    plt.title(f"Omega (U+{unicode_val:X}) from {font_path}\nAnchors (red) & Controls (blue)")
+    plt.title(f"Glyph U+{unicode_val:X} from {font_path}\nAnchors (red), Controls (blue)")
     plt.show()
 
-    # 2B) Analyze segments and write to a text file
-    #     We'll count how many lines, quadratics, cubics, subpaths, etc.
-
-    # Count subpaths by scanning the Path codes for MOVETO
-    # Each MOVETO typically starts a new subpath.
+    # Analysis
     num_subpaths = sum(code == MplPath.MOVETO for code in path.codes)
-
     num_line_segments = sum(1 for (stype, _) in segments if stype == "line")
     num_quad_segments = sum(1 for (stype, _) in segments if stype == "quadratic")
     num_cubic_segments = sum(1 for (stype, _) in segments if stype == "cubic")
-    
-    # We'll also label degrees: line => degree 1, quadratic => 2, cubic => 3
-    # TrueType "curve3" => degree 2, CFF "curve4" => degree 3
-    # The code above lumps them as "quadratic" or "cubic."
 
     with open(report_file, "w") as f:
-        f.write(f"Omega (U+{unicode_val:X}) Analysis for font: {font_path}\n")
+        f.write(f"Analysis for U+{unicode_val:X} in font: {font_path}\n")
         f.write(f"Glyph name: {glyph_name}\n\n")
-        
+
         f.write("=== Basic Point Counts ===\n")
         f.write(f"Total on-curve (anchor) points: {len(anchor_points)}\n")
         f.write(f"Total off-curve control points: {len(control_points)}\n\n")
@@ -333,12 +259,53 @@ def plotOmegaFromFont(font_path, unicode_val=0x03A9, scale=1.0, report_file="ome
 
 
 ##############################################################################
-# 3) Run the code
+# 3) argparse-based CLI
 ##############################################################################
 
 if __name__ == "__main__":
-    # Example usage
-    font_path = "MathJax_Main-Bold.otf"  # Or TTF if you have a TrueType version
-    plotOmegaFromFont(font_path, unicode_val=0x03A9, scale=1.0,
-                      report_file="omega_analysis.txt")
+    import sys
+    import argparse
+    
+    parser = argparse.ArgumentParser(
+        description="Extract and analyze a glyph from a font, then plot/annotate it.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+    parser.add_argument(
+        "--font", "-f", 
+        required=True,
+        help="Path to the TTF/OTF font file."
+    )
+    parser.add_argument(
+        "--unicode", "-u",
+        required=True,
+        help="Unicode codepoint in hex (e.g. 0x03A9 or 03A9)."
+    )
+    parser.add_argument(
+        "--report", "-r",
+        default="out.txt",
+        help="Output filename for analysis text."
+    )
+    parser.add_argument(
+        "--scale", "-s",
+        type=float,
+        default=1.0,
+        help="Scale factor for glyph coordinates."
+    )
+    
+    args = parser.parse_args()
+
+    # Convert unicode string to int (hex)
+    # e.g. if user passes '03A9' or '0x03A9'
+    unicode_str = args.unicode.strip().lower()
+    if unicode_str.startswith("0x"):
+        unicode_val = int(unicode_str, 16)
+    else:
+        unicode_val = int("0x" + unicode_str, 16)
+
+    plotOmegaFromFont(
+        font_path=args.font,
+        unicode_val=unicode_val,
+        scale=args.scale,
+        report_file=args.report
+    )
 

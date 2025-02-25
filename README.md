@@ -3,6 +3,10 @@
 ## step 1
 run the included `woff2otf.py` script to convert your `.woff` font file into `.otf` if it isn't already.
 
+```
+./woff2otf.py MathJax_Calligraphic-Regular.woff MathJax_Calligraphic-Regular.otf
+```
+
 ## step 1.5
 
 if you already know the unicode character you want, in this case we want `U+0041` then you can skip this step.

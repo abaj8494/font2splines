@@ -1,0 +1,55 @@
+Analysis for U+42 in font: ../fonts/MathJax_Main-Regular.ttf
+Glyph name: B
+
+=== Basic Point Counts ===
+Total on-curve (anchor) points: 44
+Total off-curve control points: 50
+
+=== Path / Segment Summary ===
+Number of subpaths: 3
+Number of line segments (degree 1): 16
+Number of quadratic segments (degree 2): 0
+Number of cubic segments (degree 3): 25
+
+=== Detailed Segments ===
+Segment 1: type=line, degree=1, points=[(131.0, 622.0), (131.0, 61.0)]
+Segment 2: type=cubic, degree=3, points=[(131.0, 61.0), (119.0, 49.0), (118.0, 47.0), (61.0, 46.0)]
+Segment 3: type=line, degree=1, points=[(61.0, 46.0), (28.0, 46.0)]
+Segment 4: type=line, degree=1, points=[(28.0, 46.0), (28.0, 0.0)]
+Segment 5: type=line, degree=1, points=[(28.0, 0.0), (242.0, 0.0)]
+Segment 6: type=cubic, degree=3, points=[(242.0, 0.0), (455.0, 1.0), (456.0, 1.0), (469.0, 3.0)]
+Segment 7: type=cubic, degree=3, points=[(469.0, 3.0), (562.0, 17.0), (632.0, 78.0), (649.0, 156.0)]
+Segment 8: type=cubic, degree=3, points=[(649.0, 156.0), (651.0, 164.0), (651.0, 176.0), (651.0, 187.0)]
+Segment 9: type=cubic, degree=3, points=[(651.0, 187.0), (651.0, 196.0), (651.0, 205.0), (650.0, 211.0)]
+Segment 10: type=cubic, degree=3, points=[(650.0, 211.0), (632.0, 293.0), (557.0, 346.0), (466.0, 357.0)]
+Segment 11: type=line, degree=1, points=[(466.0, 357.0), (476.0, 360.0)]
+Segment 12: type=cubic, degree=3, points=[(476.0, 360.0), (564.0, 382.0), (624.0, 444.0), (624.0, 512.0)]
+Segment 13: type=cubic, degree=3, points=[(624.0, 512.0), (624.0, 529.0), (620.0, 549.0), (612.0, 567.0)]
+Segment 14: type=cubic, degree=3, points=[(612.0, 567.0), (597.0, 600.0), (568.0, 630.0), (531.0, 651.0)]
+Segment 15: type=cubic, degree=3, points=[(531.0, 651.0), (505.0, 666.0), (478.0, 674.0), (443.0, 680.0)]
+Segment 16: type=cubic, degree=3, points=[(443.0, 680.0), (430.0, 682.0), (429.0, 682.0), (229.0, 683.0)]
+Segment 17: type=line, degree=1, points=[(229.0, 683.0), (28.0, 683.0)]
+Segment 18: type=line, degree=1, points=[(28.0, 683.0), (28.0, 637.0)]
+Segment 19: type=line, degree=1, points=[(28.0, 637.0), (61.0, 637.0)]
+Segment 20: type=cubic, degree=3, points=[(61.0, 637.0), (118.0, 636.0), (119.0, 634.0), (131.0, 622.0)]
+Segment 21: type=cubic, degree=3, points=[(511.0, 513.0), (511.0, 447.0), (472.0, 400.0), (422.0, 382.0)]
+Segment 22: type=cubic, degree=3, points=[(422.0, 382.0), (419.0, 381.0), (411.0, 379.0), (406.0, 377.0)]
+Segment 23: type=line, degree=1, points=[(406.0, 377.0), (396.0, 375.0)]
+Segment 24: type=line, degree=1, points=[(396.0, 375.0), (312.0, 374.0)]
+Segment 25: type=line, degree=1, points=[(312.0, 374.0), (229.0, 374.0)]
+Segment 26: type=line, degree=1, points=[(229.0, 374.0), (229.0, 499.0)]
+Segment 27: type=cubic, degree=3, points=[(229.0, 499.0), (229.0, 622.0), (230.0, 625.0), (232.0, 628.0)]
+Segment 28: type=cubic, degree=3, points=[(232.0, 628.0), (234.0, 632.0), (239.0, 635.0), (248.0, 636.0)]
+Segment 29: type=cubic, degree=3, points=[(248.0, 636.0), (254.0, 636.0), (293.0, 637.0), (333.0, 637.0)]
+Segment 30: type=cubic, degree=3, points=[(333.0, 637.0), (373.0, 637.0), (412.0, 636.0), (416.0, 636.0)]
+Segment 31: type=cubic, degree=3, points=[(416.0, 636.0), (472.0, 625.0), (511.0, 576.0), (511.0, 513.0)]
+Segment 32: type=cubic, degree=3, points=[(537.0, 188.0), (537.0, 126.0), (500.0, 72.0), (443.0, 53.0)]
+Segment 33: type=cubic, degree=3, points=[(443.0, 53.0), (428.0, 48.0), (427.0, 47.0), (383.0, 47.0)]
+Segment 34: type=line, degree=1, points=[(383.0, 47.0), (334.0, 47.0)]
+Segment 35: type=cubic, degree=3, points=[(334.0, 47.0), (241.0, 47.0), (240.0, 47.0), (234.0, 52.0)]
+Segment 36: type=cubic, degree=3, points=[(234.0, 52.0), (233.0, 53.0), (231.0, 56.0), (230.0, 59.0)]
+Segment 37: type=cubic, degree=3, points=[(230.0, 59.0), (229.0, 61.0), (229.0, 103.0), (229.0, 200.0)]
+Segment 38: type=line, degree=1, points=[(229.0, 200.0), (229.0, 337.0)]
+Segment 39: type=line, degree=1, points=[(229.0, 337.0), (329.0, 337.0)]
+Segment 40: type=line, degree=1, points=[(329.0, 337.0), (430.0, 336.0)]
+Segment 41: type=cubic, degree=3, points=[(430.0, 336.0), (491.0, 322.0), (537.0, 266.0), (537.0, 188.0)]
