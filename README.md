@@ -33,6 +33,7 @@ close the window when you are done inspecting it's output --- a text file named 
 run `redraw.py` to rebuild the glyph exclusively using the spline coordinates that you ripped from the font file. the coordinates along with some analysis is present in the `out.txt` file.
 
 | ![q decomposed](img/q.png) | ![q redrawn](img/q-new.png) |
+| --- | --- |
 
 | ![greek decomposed Omega](img/omega-decomp.png) | ![greek decomposed Omega BOLD](img/omega-decomp-bold.png) |
 | --- | --- |
